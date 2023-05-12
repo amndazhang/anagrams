@@ -52,6 +52,15 @@ public class DLList<E> implements Serializable {
 		after.setPrev(newNode);
 		size++;
 	}
+
+	public int getIndex(E element){
+		for (int i=0; i<size; i++){
+			if (element.equals(get(i))){
+				return i;
+			}
+		}
+		return -1;
+	}
 	
 	public E get(int index) {
 		if (getNode(index) == null)

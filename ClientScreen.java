@@ -13,6 +13,8 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -22,7 +24,7 @@ import java.awt.Font;
 import java.io.*;
 import java.net.*;
 
-public class ClientScreen extends JPanel implements MouseListener, MouseMotionListener, ActionListener {
+public class ClientScreen extends JPanel implements ActionListener, KeyListener {
 
     private JTextField textInput;
     // private String chatMessage;
@@ -30,7 +32,9 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
     private String name = "";
     private boolean loggedIn = false;
 
-    private String word;
+    private String string; // 6 letters
+    private String typedWord; // current typing word
+    private DLList<Character> availableLetters;
 
     // private String chat = "";
 
@@ -72,6 +76,9 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
         textInput.addActionListener(this);
         textInput.setText("NICKNAME");
 
+        typedWord = "";
+        availableLetters = new DLList<>();
+
         // textArea = new JTextArea();
         // textArea.setBounds(100, 400, 200, 200);
         // add(textArea);
@@ -81,8 +88,10 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
         // grid[i][j] = new Square(dimension);
         // }
         // }
-        addMouseListener(this);
-        addMouseMotionListener(this);
+        // addMouseListener(this);
+        // addMouseMotionListener(this);
+        addKeyListener(this);        
+		setFocusable(true);
         setLayout(null);
     }
 
@@ -97,62 +106,18 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
         super.paintComponent(g);
 
         if (loggedIn) {
-            drawBackground(g);
-            drawCharacters(g, word);
+            // background
+            g.setColor(new Color(166, 127, 235));
+            g.fillRect(0, 0, 600, 600);
+
+            drawTypedLetters(g);
+            drawAvailableLetters(g);
 
             g.drawString("Player: " + name, 50, 50);
         }
 
         repaint();
 
-    }
-
-    public void mousePressed(MouseEvent e) {
-
-    }
-
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    public void mouseEntered(MouseEvent e) {
-        // System.out.println("f");
-    }
-
-    public void mouseExited(MouseEvent e) {
-    }
-
-    public void mouseClicked(MouseEvent e) {
-        // if (drawing) {
-        // fill(e.getX(), e.getY());
-        // changeColor(e.getX(), e.getY());
-        // // System.out.println(grid.toString());
-        // try {
-
-        // outObj.reset();
-        // outObj.writeObject(grid);
-        // // System.out.println(grid.toString());
-        // } catch (Exception ex) {
-
-        // }
-    }
-
-    public void mouseMoved(MouseEvent e) {
-    }
-
-    public void mouseDragged(MouseEvent e) {
-        // if (drawing) {
-        // fill(e.getX(), e.getY());
-
-        // // System.out.println(grid.toString());
-        // try {
-
-        // outObj.reset();
-        // outObj.writeObject(grid);
-        // } catch (Exception ex) {
-
-        // }
-        // }
     }
 
     public void poll() throws IOException {
@@ -193,7 +158,12 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
                             System.out.println("true");
                             System.out.println(s);
                             System.out.println(s.split(" ")[1]);
-                            word = s.split(" ")[1];
+                            string = s.split(" ")[1];
+
+                            char[] arr = string.toCharArray();
+                            for (char each : arr){
+                                availableLetters.add(each);
+                            }
                         } else {
                             // textArea.setText(textArea.getText() + "\n" + s);
                             // if (s.contains(word)) {
@@ -253,35 +223,81 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
 
     }
 
-    public void drawBackground(Graphics g) {
-        g.setColor(new Color(166, 127, 235));
-        g.fillRect(0, 0, 600, 600);
+    @Override
+    public void keyPressed(KeyEvent e) {
+        Character c = e.getKeyChar();
+        int code = e.getKeyCode();
+        System.out.println("You have pressed " + c);
+
+        for (Character each : string.toCharArray()){
+            if (each == c){
+                type(c);
+            }
+        }
+
+        if (code == 8){
+            backspace();
+        }
+
+        System.out.println(typedWord);
+        System.out.print("avails = " + availableLetters.toString());
+
+        repaint();
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+
+    public void drawTypedLetters(Graphics g) {
         g.setColor(Color.white);
-        for (int i = 0; i < 6; i++) {
+        for (int i=0; i<6; i++){
             int x = 15 + i * 100;
             g.fillRect(x, 400, 70, 70);
         }
-        for (int i = 0; i < 6; i++) {
+        g.setColor(Color.black);
+        for (int i = 0; i < typedWord.length(); i++) {
             int x = 15 + i * 100;
-            Character c = word.toCharArray()[i];
-            g.setColor(Color.LIGHT_GRAY);
-            g.fillRect(x, 500, 70, 70);
+            Character c = typedWord.toCharArray()[i];
+            g.drawString("" + c, x + 50, 440);
         }
     }
 
-    public void drawCharacters(Graphics g, String word){
+    public void drawAvailableLetters(Graphics g) {
         for (int i = 0; i < 6; i++) {
             int x = 15 + i * 100;
-            Character c = word.toCharArray()[i];
+            Character c = availableLetters.get(i);
             g.setColor(Color.LIGHT_GRAY);
             g.fillRect(x, 500, 70, 70);
             g.setColor(Color.black);
-            g.drawString("" + c, x+50, 540);
+            g.drawString("" + c, x + 50, 540);
         }
     }
 
-    public void type(){
-        
+    // take one of the available letters and put in first available spot
+    public void type(Character c) {
+        boolean avail = false;
+        for (int i=0; i<availableLetters.size(); i++){
+            if (c == availableLetters.get(i)){
+                avail = true;
+                break;
+            }
+        }
+        if (typedWord.length() <= 6 && avail) {
+            typedWord += c;
+            availableLetters.set(availableLetters.getIndex(c), ' ');
+        }
+    }
+
+    // remove last char of typed word
+    public void backspace() {
+        if (typedWord.length() > 0) {
+            typedWord = typedWord.substring(0, typedWord.length()-1);
+        }
     }
 
 }
