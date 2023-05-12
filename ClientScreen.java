@@ -25,34 +25,62 @@ import java.net.*;
 public class ClientScreen extends JPanel implements MouseListener, MouseMotionListener, ActionListener {
 
     private JTextField textInput;
-    private String chatMessage;
+    // private String chatMessage;
     private String hostName = "localhost";
     private String name = "";
-    private String chat = "";
+    private boolean loggedIn = false;
+
+    private String word;
+
+    // private String chat = "";
 
     // private ArrayList<Image> images = new ArrayList<>();
     // private JButton sendButton;
+    // private boolean drawing = false;
 
-    private JTextArea textArea = new JTextArea();
+    // private JTextArea textArea = new JTextArea();
 
     // private PrintWriter out;
     private ObjectOutputStream outObj;
 
-    private String word = "";
-    private DLList<String> possibleWords = new DLList<>();
-    private String guess = "";
+    // private int count = 0;
+
+    // private Square[][] grid;
+
+    // private int size, length;
+    // private int dimension;
+    // private int gridX, gridY;
+
+    // private Color color;
+    // private Color[] colors;
 
     public ClientScreen() {
+        // color = Color.RED;
+        // colors = new Color[] { Color.BLACK, Color.WHITE, Color.GRAY, Color.RED,
+        // Color.ORANGE, Color.YELLOW, Color.GREEN,
+        // Color.BLUE, Color.PINK };
+        // size = 400;
+        // length = 20;
+        // dimension = size / length;
+        // grid = new Square[length][length];
+        // gridX = 50;
+        // gridY = 50;
 
         textInput = new JTextField();
-        textInput.setBounds(600, 300, 200, 30);
+        textInput.setBounds(100, 300, 200, 30);
         this.add(textInput);
         textInput.addActionListener(this);
+        textInput.setText("NICKNAME");
 
-        textArea = new JTextArea();
-        textArea.setBounds(600, 400, 200, 200);
-        add(textArea);
+        // textArea = new JTextArea();
+        // textArea.setBounds(100, 400, 200, 200);
+        // add(textArea);
 
+        // for (int i = 0; i < grid.length; i++) {
+        // for (int j = 0; j < grid[i].length; j++) {
+        // grid[i][j] = new Square(dimension);
+        // }
+        // }
         addMouseListener(this);
         addMouseMotionListener(this);
         setLayout(null);
@@ -67,10 +95,15 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        drawBackground(g);
-        for (int i = 0; i < 6; i++) {
-            drawCharacter(g, 100+i*50, 100, word.toCharArray()[i]);
+
+        if (loggedIn) {
+            drawBackground(g);
+            drawCharacters(g, word);
+
+            g.drawString("Player: " + name, 50, 50);
         }
+
+        repaint();
 
     }
 
@@ -102,8 +135,6 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
         // } catch (Exception ex) {
 
         // }
-        // }
-
     }
 
     public void mouseMoved(MouseEvent e) {
@@ -128,54 +159,62 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
 
         int portNumber = 1024;
         try {
-            try (// ServerSocket clientServer = new ServerSocket(portNumber);
-                    Socket serverSocket = new Socket(hostName, portNumber)) {
-                outObj = new ObjectOutputStream(serverSocket.getOutputStream());
+            // ServerSocket clientServer = new ServerSocket(portNumber);
+            Socket serverSocket = new Socket(hostName, portNumber);
+            outObj = new ObjectOutputStream(serverSocket.getOutputStream());
 
-                // out = new PrintWriter(serverSocket.getOutputStream(), true);
+            // out = new PrintWriter(serverSocket.getOutputStream(), true);
 
-                ObjectInputStream inObj = new ObjectInputStream(serverSocket.getInputStream());
+            ObjectInputStream inObj = new ObjectInputStream(serverSocket.getInputStream());
 
-                outObj.writeObject("Connection Successful!");
+            // outObj.writeObject("Connection Successful!");
 
-                // BufferedReader in = new BufferedReader(new
-                // InputStreamReader(serverSocket.getInputStream()));
+            // BufferedReader in = new BufferedReader(new
+            // InputStreamReader(serverSocket.getInputStream()));
 
-                // Receive connection message
-                // Waits for and receives an object
-                // readObject() requires a ClassNOtFoundException
-                // String serverMessage = (String) in.readObject();
-                // System.out.println(serverMessage);
+            // Receive connection message
+            // Waits for and receives an object
+            // readObject() requires a ClassNOtFoundException
+            // String serverMessage = (String) in.readObject();
+            // System.out.println(serverMessage);
 
-                // Receive server location
+            // Receive server location
+            while (true) {
+                try {
+                    Object o = inObj.readObject();
+                    // System.out.println(o);
+                    if (o instanceof String) {
 
-                while (true) {
-                    System.out.println("entered while loop");
-                    try {
-                        Object o = inObj.readObject();
-                        if (o instanceof MyHashMap) {
-                            MyHashMap<String, DLList<String>> tempMap = (MyHashMap<String, DLList<String>>) o;
-
-                            word = tempMap.keySet().toDLList().get(0);
-                            possibleWords = tempMap.get(word);
+                        String s = (String) o;
+                        System.out.println(s);
+                        System.out.println(s.split(" ")[0]);
+                        if (s.split(" ")[0].equals("word")) {
+                            // drawing = true;
+                            System.out.println("true");
+                            System.out.println(s);
+                            System.out.println(s.split(" ")[1]);
+                            word = s.split(" ")[1];
+                        } else {
+                            // textArea.setText(textArea.getText() + "\n" + s);
+                            // if (s.contains(word)) {
+                            // outObj.reset();
+                            // outObj.writeObject(s);
+                            // }
+                            // if (s.charAt(0) != '_') {
+                            // serverSocket.close();
+                            // }
                         }
-                        System.out.println(o);
-                        System.out.println("word: " + word);
-                        System.out.println(possibleWords);
-
-                        if (o instanceof String) {
-
-                            String s = (String) o;
-                            textArea.setText(textArea.getText() + "\n" + s);
-                        }
-
-                        repaint();
-                    } catch (Exception e) {
-
                     }
+                    // else if (o instanceof Square[][] && !drawing) {
+
+                    // grid = (Square[][]) o;
+                    // }
+                    repaint();
+                } catch (Exception e) {
+
                 }
-                // game.getTable();
             }
+            // game.getTable();
 
             // in.close();
 
@@ -193,6 +232,8 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
             String sendText = textInput.getText();
             if (name.length() == 0) {
                 name = sendText;
+                loggedIn = true;
+                textInput.setVisible(false);
             }
             try {
                 outObj.reset();
@@ -201,7 +242,7 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
 
             }
             textInput.setText(null);
-            ;
+
             // if (out != null) {
             // // out.println(sendText);
             // System.out.println(sendText);
@@ -214,18 +255,33 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
 
     public void drawBackground(Graphics g) {
         g.setColor(new Color(166, 127, 235));
-        // g.fillRect(0, 0, 600, 600);
+        g.fillRect(0, 0, 600, 600);
         g.setColor(Color.white);
-        int x = 100;
         for (int i = 0; i < 6; i++) {
-            g.fillRect(x + i * 50, 50, 20, 20);
+            int x = 15 + i * 100;
+            g.fillRect(x, 400, 70, 70);
+        }
+        for (int i = 0; i < 6; i++) {
+            int x = 15 + i * 100;
+            Character c = word.toCharArray()[i];
+            g.setColor(Color.LIGHT_GRAY);
+            g.fillRect(x, 500, 70, 70);
         }
     }
 
-    public void drawCharacter(Graphics g, int x, int y, Character c) {
-        g.setColor(Color.LIGHT_GRAY);
-        g.fillRect(x, y, 20, 20);
-        g.drawString("" + c, x, y);
+    public void drawCharacters(Graphics g, String word){
+        for (int i = 0; i < 6; i++) {
+            int x = 15 + i * 100;
+            Character c = word.toCharArray()[i];
+            g.setColor(Color.LIGHT_GRAY);
+            g.fillRect(x, 500, 70, 70);
+            g.setColor(Color.black);
+            g.drawString("" + c, x+50, 540);
+        }
+    }
+
+    public void type(){
+        
     }
 
 }
