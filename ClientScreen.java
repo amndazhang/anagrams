@@ -296,7 +296,16 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     // remove last char of typed word
     public void backspace() {
         if (typedWord.length() > 0) {
+            Character removed = typedWord.toCharArray()[typedWord.length()-1];
             typedWord = typedWord.substring(0, typedWord.length()-1);
+
+            int index = -1;
+            for (int i=0; i<6; i++){
+                if (removed == string.toCharArray()[i]){
+                    index = i;
+                }
+            }
+            availableLetters.set(index, removed);
         }
     }
 
