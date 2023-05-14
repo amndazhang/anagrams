@@ -39,7 +39,8 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     private DLList<Character> availableLetters;
     private DLList<String> wordBankList;
 
-    private DLList<String> addedWords;
+    private DLList<String> addedWords; // correct guesses
+    int score;
 
     // private String chat = "";
 
@@ -76,8 +77,9 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         // gridY = 50;
         wordBankList = new DLList<String>();
         addedWords = new DLList<String>();
+        score = 0;
         try {
-            Scanner scan = new Scanner(new FileReader("WordBank.txt"));
+            Scanner scan = new Scanner(new FileReader("wordbanks/tsignr.txt"));
             // reads one line at a time
             while (scan.hasNextLine()) {
                 String word = scan.nextLine();
@@ -131,6 +133,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
             drawAvailableLetters(g);
 
             g.drawString("Player: " + name, 50, 50);
+            g.drawString("Score: " + score, 50, 70);
 
             g.setColor(Color.white);
             g.fillRect(400, 50, 150, 200);
@@ -174,23 +177,15 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
             while (true) {
                 try {
                     Object o = inObj.readObject();
-                    // System.out.println(o);
                     if (o instanceof String) {
 
                         String s = (String) o;
-                        // System.out.println(s);
-                        // System.out.println(s.split(" ")[0]);
                         if (s.split(" ")[0].equals("word")) {
-                            // drawing = true;
-                            // System.out.println("true");
-                            // System.out.println(s);
-                            // System.out.println(s.split(" ")[1]);
                             string = s.split(" ")[1];
 
                             char[] arr = string.toCharArray();
                             for (char each : arr) {
                                 availableLetters.add(each);
-                                // currLetterBank += each;
                             }
 
                         } else {
@@ -204,24 +199,14 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
                             // }
                         }
                     }
-                    // else if (o instanceof Square[][] && !drawing) {
-
-                    // grid = (Square[][]) o;
-                    // }
                     repaint();
                 } catch (Exception e) {
 
                 }
             }
-            // game.getTable();
-
-            // in.close();
-
-            // outObj.close();
 
         } catch (IOException e) {
             System.err.println("Couldn't get I/O for the connection");
-            // System.exit(1);
         }
     }
 
@@ -241,12 +226,6 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
 
             }
             textInput.setText(null);
-
-            // if (out != null) {
-            // // out.println(sendText);
-            // System.out.println(sendText);
-            // // chatMessage += sendText + "\n";
-            // }
         }
         repaint();
 
@@ -256,8 +235,6 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     public void keyPressed(KeyEvent e) {
         Character c = e.getKeyChar();
         int code = e.getKeyCode();
-        // System.out.println(e.getKeyCode());
-        // System.out.println("You have pressed " + c);
 
         for (Character each : string.toCharArray()) {
             if (each == c) {
@@ -272,9 +249,6 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         if (code == 10) {
             enter();
         }
-
-        // System.out.println(typedWord);
-        // System.out.print("avails = " + availableLetters.toString());
 
         repaint();
     }
@@ -305,7 +279,6 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         for (int i = 0; i < 6; i++) {
             int x = 15 + i * 100;
             Character c = availableLetters.get(i);
-            System.out.println(c);
             g.setColor(Color.LIGHT_GRAY);
             g.fillRect(x, 500, 70, 70);
             g.setColor(Color.black);
@@ -347,8 +320,9 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     public void enter() {
 
         for (int i = 0; i < wordBankList.size(); i++) {
-            if (wordBankList.get(i).equals(typedWord)) {
+            if (wordBankList.get(i).equals(typedWord) && !addedWords.contains(typedWord)) {
                 addedWords.add(typedWord);
+                addToScore(typedWord);
             }
         }
         typedWord = "";
@@ -356,6 +330,19 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         char[] arr = string.toCharArray();
         for (char each : arr) {
             availableLetters.add(each);
+        }
+    }
+
+    public void addToScore(String word){
+        int len = word.length();
+        if (len == 3){
+            score += 100;
+        } else if (len == 4){
+            score += 400;
+        } else if (len == 5){
+            score += 1200;
+        } else if (len == 6){
+            score += 2000;
         }
     }
 

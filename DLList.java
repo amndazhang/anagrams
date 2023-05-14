@@ -169,5 +169,15 @@ public class DLList<E> implements Serializable {
         }
         return -1;
 	}
+
+	public boolean contains(E element){
+		Node<E> current = head.next();
+        for (int i = 0; i < size; i++) {
+            if (current.get().equals(element))
+                return true;
+            current = current.next();
+        }
+        return false;
+	}
 	
 }
