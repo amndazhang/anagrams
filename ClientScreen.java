@@ -23,6 +23,7 @@ import java.awt.Font;
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
 public class ClientScreen extends JPanel implements ActionListener, KeyListener {
 
@@ -34,7 +35,11 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
 
     private String string; // 6 letters
     private String typedWord; // current typing word
+    // private String currLetterBank = "";
     private DLList<Character> availableLetters;
+    private DLList<String> wordBankList;
+
+    private DLList<String> addedWords;
 
     // private String chat = "";
 
@@ -58,7 +63,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     // private Color color;
     // private Color[] colors;
 
-    public ClientScreen() {
+    public ClientScreen() throws FileNotFoundException {
         // color = Color.RED;
         // colors = new Color[] { Color.BLACK, Color.WHITE, Color.GRAY, Color.RED,
         // Color.ORANGE, Color.YELLOW, Color.GREEN,
@@ -69,6 +74,18 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         // grid = new Square[length][length];
         // gridX = 50;
         // gridY = 50;
+        wordBankList = new DLList<String>();
+        addedWords = new DLList<String>();
+        try {
+            Scanner scan = new Scanner(new FileReader("WordBank.txt"));
+            // reads one line at a time
+            while (scan.hasNextLine()) {
+                String word = scan.nextLine();
+                wordBankList.add(word);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
         textInput = new JTextField();
         textInput.setBounds(100, 300, 200, 30);
@@ -90,8 +107,8 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         // }
         // addMouseListener(this);
         // addMouseMotionListener(this);
-        addKeyListener(this);        
-		setFocusable(true);
+        addKeyListener(this);
+        setFocusable(true);
         setLayout(null);
     }
 
@@ -114,8 +131,18 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
             drawAvailableLetters(g);
 
             g.drawString("Player: " + name, 50, 50);
+
+            g.setColor(Color.white);
+            g.fillRect(400, 50, 150, 200);
         }
 
+        int wordX = 410;
+        int wordY = 60;
+        g.setColor(Color.black);
+        for (int i = 0; i < addedWords.size(); i++) {
+            g.drawString(addedWords.get(i), wordX, wordY);
+            wordY += 30;
+        }
         repaint();
 
     }
@@ -151,19 +178,21 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
                     if (o instanceof String) {
 
                         String s = (String) o;
-                        System.out.println(s);
-                        System.out.println(s.split(" ")[0]);
+                        // System.out.println(s);
+                        // System.out.println(s.split(" ")[0]);
                         if (s.split(" ")[0].equals("word")) {
                             // drawing = true;
-                            System.out.println("true");
-                            System.out.println(s);
-                            System.out.println(s.split(" ")[1]);
+                            // System.out.println("true");
+                            // System.out.println(s);
+                            // System.out.println(s.split(" ")[1]);
                             string = s.split(" ")[1];
 
                             char[] arr = string.toCharArray();
-                            for (char each : arr){
+                            for (char each : arr) {
                                 availableLetters.add(each);
+                                // currLetterBank += each;
                             }
+
                         } else {
                             // textArea.setText(textArea.getText() + "\n" + s);
                             // if (s.contains(word)) {
@@ -227,20 +256,25 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     public void keyPressed(KeyEvent e) {
         Character c = e.getKeyChar();
         int code = e.getKeyCode();
-        System.out.println("You have pressed " + c);
+        // System.out.println(e.getKeyCode());
+        // System.out.println("You have pressed " + c);
 
-        for (Character each : string.toCharArray()){
-            if (each == c){
+        for (Character each : string.toCharArray()) {
+            if (each == c) {
                 type(c);
             }
         }
 
-        if (code == 8){
+        if (code == 8) {
             backspace();
         }
 
-        System.out.println(typedWord);
-        System.out.print("avails = " + availableLetters.toString());
+        if (code == 10) {
+            enter();
+        }
+
+        // System.out.println(typedWord);
+        // System.out.print("avails = " + availableLetters.toString());
 
         repaint();
     }
@@ -255,7 +289,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
 
     public void drawTypedLetters(Graphics g) {
         g.setColor(Color.white);
-        for (int i=0; i<6; i++){
+        for (int i = 0; i < 6; i++) {
             int x = 15 + i * 100;
             g.fillRect(x, 400, 70, 70);
         }
@@ -271,6 +305,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         for (int i = 0; i < 6; i++) {
             int x = 15 + i * 100;
             Character c = availableLetters.get(i);
+            System.out.println(c);
             g.setColor(Color.LIGHT_GRAY);
             g.fillRect(x, 500, 70, 70);
             g.setColor(Color.black);
@@ -281,8 +316,8 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     // take one of the available letters and put in first available spot
     public void type(Character c) {
         boolean avail = false;
-        for (int i=0; i<availableLetters.size(); i++){
-            if (c == availableLetters.get(i)){
+        for (int i = 0; i < availableLetters.size(); i++) {
+            if (c == availableLetters.get(i)) {
                 avail = true;
                 break;
             }
@@ -296,16 +331,31 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     // remove last char of typed word
     public void backspace() {
         if (typedWord.length() > 0) {
-            Character removed = typedWord.toCharArray()[typedWord.length()-1];
-            typedWord = typedWord.substring(0, typedWord.length()-1);
+            Character removed = typedWord.toCharArray()[typedWord.length() - 1];
+            typedWord = typedWord.substring(0, typedWord.length() - 1);
 
             int index = -1;
-            for (int i=0; i<6; i++){
-                if (removed == string.toCharArray()[i]){
+            for (int i = 0; i < 6; i++) {
+                if (removed == string.toCharArray()[i]) {
                     index = i;
                 }
             }
             availableLetters.set(index, removed);
+        }
+    }
+
+    public void enter() {
+
+        for (int i = 0; i < wordBankList.size(); i++) {
+            if (wordBankList.get(i).equals(typedWord)) {
+                addedWords.add(typedWord);
+            }
+        }
+        typedWord = "";
+        availableLetters = new DLList<>();
+        char[] arr = string.toCharArray();
+        for (char each : arr) {
+            availableLetters.add(each);
         }
     }
 
