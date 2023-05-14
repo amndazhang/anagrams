@@ -8,6 +8,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+import java.net.URL;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseEvent;
@@ -318,12 +322,19 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     }
 
     public void enter() {
-
+        boolean correct = false;
         for (int i = 0; i < wordBankList.size(); i++) {
             if (wordBankList.get(i).equals(typedWord) && !addedWords.contains(typedWord)) {
                 addedWords.add(typedWord);
                 addToScore(typedWord);
+                correct = true;
+                break;
             }
+        }
+        if (correct){
+            correctSound();
+        } else {
+            wrongSound();
         }
         typedWord = "";
         availableLetters = new DLList<>();
@@ -333,16 +344,40 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         }
     }
 
-    public void addToScore(String word){
+    public void addToScore(String word) {
         int len = word.length();
-        if (len == 3){
+        if (len == 3) {
             score += 100;
-        } else if (len == 4){
+        } else if (len == 4) {
             score += 400;
-        } else if (len == 5){
+        } else if (len == 5) {
             score += 1200;
-        } else if (len == 6){
+        } else if (len == 6) {
             score += 2000;
+        }
+    }
+
+    public void correctSound() {
+
+        try {
+            URL url = this.getClass().getClassLoader().getResource("sounds/correct.wav");
+            Clip clip = AudioSystem.getClip();
+            clip.open(AudioSystem.getAudioInputStream(url));
+            clip.start();
+        } catch (Exception exc) {
+            exc.printStackTrace(System.out);
+        }
+    }
+
+    public void wrongSound() {
+
+        try {
+            URL url = this.getClass().getClassLoader().getResource("sounds/wrong.wav");
+            Clip clip = AudioSystem.getClip();
+            clip.open(AudioSystem.getAudioInputStream(url));
+            clip.start();
+        } catch (Exception exc) {
+            exc.printStackTrace(System.out);
         }
     }
 
