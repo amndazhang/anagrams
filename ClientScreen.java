@@ -8,11 +8,19 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+import java.net.URL;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+
+import java.util.Timer;
+
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -21,40 +29,74 @@ import java.awt.Font;
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
 
-public class ClientScreen extends JPanel implements MouseListener, MouseMotionListener, ActionListener {
+public class ClientScreen extends JPanel implements ActionListener, KeyListener {
 
     private JTextField textInput;
-    private String chatMessage;
+    // private String chatMessage;
     private String hostName = "localhost";
     private String name = "";
-    private String chat = "";
+    private boolean loggedIn = false;
+
+    private String string; // 6 letters
+    private String typedWord; // current typing word
+    // private String currLetterBank = "";
+    private DLList<Character> availableLetters;
+    private DLList<String> wordBankList;
+
+    private DLList<String> addedWords; // correct guesses
+    private int score;
+
+    private double startTime;
+    private boolean gameStarted, gameEnded;
+
+    // private String chat = "";
 
     // private ArrayList<Image> images = new ArrayList<>();
-    // private JButton sendButton;
+    private JButton startButton;
+    // private boolean drawing = false;
 
-    private JTextArea textArea = new JTextArea();
+    // private JTextArea textArea = new JTextArea();
 
     // private PrintWriter out;
     private ObjectOutputStream outObj;
 
-    private String word = "";
-    private DLList<String> possibleWords = new DLList<>();
-    private String guess = "";
-
-    public ClientScreen() {
+    public ClientScreen() throws FileNotFoundException {
+        wordBankList = new DLList<String>();
+        addedWords = new DLList<String>();
+        score = 0;
+        gameStarted = false;
+        gameEnded = false;
+        try {
+            Scanner scan = new Scanner(new FileReader("wordbanks/tsignr.txt"));
+            // reads one line at a time
+            while (scan.hasNextLine()) {
+                String word = scan.nextLine();
+                wordBankList.add(word);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
         textInput = new JTextField();
-        textInput.setBounds(600, 300, 200, 30);
+        textInput.setBounds(100, 300, 200, 30);
         this.add(textInput);
         textInput.addActionListener(this);
+        textInput.setText("NICKNAME");
+        
+        startButton = new JButton();
+        startButton.setBounds(20, 500, 200, 30);
+        startButton.setText("START");
+        this.add(startButton);
+        startButton.addActionListener(this);
+        startButton.setVisible(false);
 
-        textArea = new JTextArea();
-        textArea.setBounds(600, 400, 200, 200);
-        add(textArea);
+        typedWord = "";
+        availableLetters = new DLList<>();
 
-        addMouseListener(this);
-        addMouseMotionListener(this);
+        addKeyListener(this);
+        setFocusable(true);
         setLayout(null);
     }
 
@@ -67,123 +109,106 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        drawBackground(g);
-        for (int i = 0; i < 6; i++) {
-            drawCharacter(g, 100+i*50, 100, word.toCharArray()[i]);
+
+        if (loggedIn && !gameStarted && !gameEnded) { // start screen
+            g.setColor(new Color(166, 127, 235));
+            g.fillRect(0, 0, 600, 600);
+
+            startButton.setVisible(true);
+        } else if (loggedIn && gameStarted && !gameEnded) { // play screen
+            startButton.setVisible(false);
+
+            g.setColor(new Color(166, 127, 235));
+            g.fillRect(0, 0, 600, 600);
+
+            drawTypedLetters(g);
+            drawAvailableLetters(g);
+
+            g.drawString("Player: " + name, 50, 50);
+            g.drawString("Score: " + score, 50, 70);
+
+            g.setColor(Color.white);
+            g.fillRect(400, 50, 150, 200);
+            int wordX = 410;
+            int wordY = 60;
+            g.setColor(Color.black);
+            for (int i = 0; i < addedWords.size(); i++) {
+                g.drawString(addedWords.get(i), wordX, wordY);
+                wordY += 30;
+            }
+
+            System.out.println(System.currentTimeMillis() - startTime);
+            if (System.currentTimeMillis() - startTime >= 1000*60){
+                gameEnded = true;
+            }
+        } else if (loggedIn && gameStarted && gameEnded) { // end game
+            g.setColor(Color.white);
+            g.fillRect(0, 0, 600, 600);
+            g.setColor(Color.black);
+            g.drawString("END", 100, 100);
         }
 
-    }
+        repaint();
 
-    public void mousePressed(MouseEvent e) {
-
-    }
-
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    public void mouseEntered(MouseEvent e) {
-        // System.out.println("f");
-    }
-
-    public void mouseExited(MouseEvent e) {
-    }
-
-    public void mouseClicked(MouseEvent e) {
-        // if (drawing) {
-        // fill(e.getX(), e.getY());
-        // changeColor(e.getX(), e.getY());
-        // // System.out.println(grid.toString());
-        // try {
-
-        // outObj.reset();
-        // outObj.writeObject(grid);
-        // // System.out.println(grid.toString());
-        // } catch (Exception ex) {
-
-        // }
-        // }
-
-    }
-
-    public void mouseMoved(MouseEvent e) {
-    }
-
-    public void mouseDragged(MouseEvent e) {
-        // if (drawing) {
-        // fill(e.getX(), e.getY());
-
-        // // System.out.println(grid.toString());
-        // try {
-
-        // outObj.reset();
-        // outObj.writeObject(grid);
-        // } catch (Exception ex) {
-
-        // }
-        // }
     }
 
     public void poll() throws IOException {
 
         int portNumber = 1024;
         try {
-            try (// ServerSocket clientServer = new ServerSocket(portNumber);
-                    Socket serverSocket = new Socket(hostName, portNumber)) {
-                outObj = new ObjectOutputStream(serverSocket.getOutputStream());
+            // ServerSocket clientServer = new ServerSocket(portNumber);
+            Socket serverSocket = new Socket(hostName, portNumber);
+            outObj = new ObjectOutputStream(serverSocket.getOutputStream());
 
-                // out = new PrintWriter(serverSocket.getOutputStream(), true);
+            // out = new PrintWriter(serverSocket.getOutputStream(), true);
 
-                ObjectInputStream inObj = new ObjectInputStream(serverSocket.getInputStream());
+            ObjectInputStream inObj = new ObjectInputStream(serverSocket.getInputStream());
 
-                outObj.writeObject("Connection Successful!");
+            // outObj.writeObject("Connection Successful!");
 
-                // BufferedReader in = new BufferedReader(new
-                // InputStreamReader(serverSocket.getInputStream()));
+            // BufferedReader in = new BufferedReader(new
+            // InputStreamReader(serverSocket.getInputStream()));
 
-                // Receive connection message
-                // Waits for and receives an object
-                // readObject() requires a ClassNOtFoundException
-                // String serverMessage = (String) in.readObject();
-                // System.out.println(serverMessage);
+            // Receive connection message
+            // Waits for and receives an object
+            // readObject() requires a ClassNOtFoundException
+            // String serverMessage = (String) in.readObject();
+            // System.out.println(serverMessage);
 
-                // Receive server location
+            // Receive server location
+            while (true) {
+                try {
+                    Object o = inObj.readObject();
+                    if (o instanceof String) {
 
-                while (true) {
-                    System.out.println("entered while loop");
-                    try {
-                        Object o = inObj.readObject();
-                        if (o instanceof MyHashMap) {
-                            MyHashMap<String, DLList<String>> tempMap = (MyHashMap<String, DLList<String>>) o;
+                        String s = (String) o;
+                        if (s.split(" ")[0].equals("word")) {
+                            string = s.split(" ")[1];
 
-                            word = tempMap.keySet().toDLList().get(0);
-                            possibleWords = tempMap.get(word);
+                            char[] arr = string.toCharArray();
+                            for (char each : arr) {
+                                availableLetters.add(each);
+                            }
+
+                        } else {
+                            // textArea.setText(textArea.getText() + "\n" + s);
+                            // if (s.contains(word)) {
+                            // outObj.reset();
+                            // outObj.writeObject(s);
+                            // }
+                            // if (s.charAt(0) != '_') {
+                            // serverSocket.close();
+                            // }
                         }
-                        System.out.println(o);
-                        System.out.println("word: " + word);
-                        System.out.println(possibleWords);
-
-                        if (o instanceof String) {
-
-                            String s = (String) o;
-                            textArea.setText(textArea.getText() + "\n" + s);
-                        }
-
-                        repaint();
-                    } catch (Exception e) {
-
                     }
+                    repaint();
+                } catch (Exception e) {
+
                 }
-                // game.getTable();
             }
-
-            // in.close();
-
-            // outObj.close();
 
         } catch (IOException e) {
             System.err.println("Couldn't get I/O for the connection");
-            // System.exit(1);
         }
     }
 
@@ -193,6 +218,8 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
             String sendText = textInput.getText();
             if (name.length() == 0) {
                 name = sendText;
+                loggedIn = true;
+                textInput.setVisible(false);
             }
             try {
                 outObj.reset();
@@ -201,31 +228,159 @@ public class ClientScreen extends JPanel implements MouseListener, MouseMotionLi
 
             }
             textInput.setText(null);
-            ;
-            // if (out != null) {
-            // // out.println(sendText);
-            // System.out.println(sendText);
-            // // chatMessage += sendText + "\n";
-            // }
+        }
+        if (e.getSource() == startButton) {
+            gameStarted = true;
+            startTime = System.currentTimeMillis();
         }
         repaint();
 
     }
 
-    public void drawBackground(Graphics g) {
-        g.setColor(new Color(166, 127, 235));
-        // g.fillRect(0, 0, 600, 600);
+    @Override
+    public void keyPressed(KeyEvent e) {
+        Character c = e.getKeyChar();
+        int code = e.getKeyCode();
+
+        for (Character each : string.toCharArray()) {
+            if (each == c) {
+                type(c);
+            }
+        }
+
+        if (code == 8) {
+            backspace();
+        }
+
+        if (code == 10) {
+            enter();
+        }
+
+        repaint();
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+
+    public void drawTypedLetters(Graphics g) {
         g.setColor(Color.white);
-        int x = 100;
         for (int i = 0; i < 6; i++) {
-            g.fillRect(x + i * 50, 50, 20, 20);
+            int x = 15 + i * 100;
+            g.fillRect(x, 400, 70, 70);
+        }
+        g.setColor(Color.black);
+        for (int i = 0; i < typedWord.length(); i++) {
+            int x = 15 + i * 100;
+            Character c = typedWord.toCharArray()[i];
+            g.drawString("" + c, x + 50, 440);
         }
     }
 
-    public void drawCharacter(Graphics g, int x, int y, Character c) {
-        g.setColor(Color.LIGHT_GRAY);
-        g.fillRect(x, y, 20, 20);
-        g.drawString("" + c, x, y);
+    public void drawAvailableLetters(Graphics g) {
+        for (int i = 0; i < 6; i++) {
+            int x = 15 + i * 100;
+            Character c = availableLetters.get(i);
+            g.setColor(Color.LIGHT_GRAY);
+            g.fillRect(x, 500, 70, 70);
+            g.setColor(Color.black);
+            g.drawString("" + c, x + 50, 540);
+        }
+    }
+
+    // take one of the available letters and put in first available spot
+    public void type(Character c) {
+        boolean avail = false;
+        for (int i = 0; i < availableLetters.size(); i++) {
+            if (c == availableLetters.get(i)) {
+                avail = true;
+                break;
+            }
+        }
+        if (typedWord.length() <= 6 && avail) {
+            typedWord += c;
+            availableLetters.set(availableLetters.getIndex(c), ' ');
+        }
+    }
+
+    // remove last char of typed word
+    public void backspace() {
+        if (typedWord.length() > 0) {
+            Character removed = typedWord.toCharArray()[typedWord.length() - 1];
+            typedWord = typedWord.substring(0, typedWord.length() - 1);
+
+            int index = -1;
+            for (int i = 0; i < 6; i++) {
+                if (removed == string.toCharArray()[i]) {
+                    index = i;
+                }
+            }
+            availableLetters.set(index, removed);
+        }
+    }
+
+    public void enter() {
+        boolean correct = false;
+        for (int i = 0; i < wordBankList.size(); i++) {
+            if (wordBankList.get(i).equals(typedWord) && !addedWords.contains(typedWord)) {
+                addedWords.add(typedWord);
+                addToScore(typedWord);
+                correct = true;
+                break;
+            }
+        }
+        if (correct) {
+            correctSound();
+        } else {
+            wrongSound();
+        }
+        typedWord = "";
+        availableLetters = new DLList<>();
+        char[] arr = string.toCharArray();
+        for (char each : arr) {
+            availableLetters.add(each);
+        }
+    }
+
+    public void addToScore(String word) {
+        int len = word.length();
+        if (len == 3) {
+            score += 100;
+        } else if (len == 4) {
+            score += 400;
+        } else if (len == 5) {
+            score += 1200;
+        } else if (len == 6) {
+            score += 2000;
+        }
+    }
+
+    public void correctSound() {
+
+        try {
+            URL url = this.getClass().getClassLoader().getResource("sounds/correct.wav");
+            Clip clip = AudioSystem.getClip();
+            clip.open(AudioSystem.getAudioInputStream(url));
+            clip.start();
+        } catch (Exception exc) {
+            exc.printStackTrace(System.out);
+        }
+    }
+
+    public void wrongSound() {
+
+        try {
+            URL url = this.getClass().getClassLoader().getResource("sounds/wrong.wav");
+            Clip clip = AudioSystem.getClip();
+            clip.open(AudioSystem.getAudioInputStream(url));
+            clip.start();
+        } catch (Exception exc) {
+            exc.printStackTrace(System.out);
+        }
     }
 
 }

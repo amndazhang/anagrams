@@ -13,7 +13,8 @@ public class ServerThread implements Runnable {
     private int selected;
 
     private PrintWriter out;
-    private MyHashMap<Word, DLList<Word>> gameVersions;
+    // private Square[][] grid;
+    private String[] words = { "tsignr" };
 
     public ServerThread(Socket clientSocket, int number, Manager manager, int selected) {
         this.clientSocket = clientSocket;
@@ -21,19 +22,7 @@ public class ServerThread implements Runnable {
         this.manager = manager;
         this.selected = selected;
 
-        gameVersions = new MyHashMap<>();
-        DLList<Word> vals = new DLList<>();
-        vals.add(new Word("stings"));
-        vals.add(new Word("signs"));
-        vals.add(new Word("grin"));
-        gameVersions.put(new Word("string"), vals);
-
-        System.out.println("gameVeersions.get(0): in ctr" + gameVersions.toString());
-        // gameVersions.put("string",
-        // new{"strings","stings","string","girts","gists","grins","grist","grits","instr","rings","signs","sings","snits","sting","stirs","tings","gins","girt","gist","gits","grin","grit","inst","nits","rigs","ring","sign","sing","sins","sirs","sits","stir","ting","tins","trig","gin","git","its","nit","rig","sin","sir","sis","sit","tin"});
     }
-
-    // 321,272,406
 
     public void run() {
 
@@ -52,35 +41,38 @@ public class ServerThread implements Runnable {
                 manager.broadcastObject("_" + name + " logged in");
                 String word = "";
                 // Sends a message
-
+                System.out.println("hi");
+                // word = words[(int)(Math.random() * words.length)];
                 outObj.reset();
-                System.out.println("gameVeersions.get(0): " + gameVersions.get(0));
-                outObj.writeObject(gameVersions.get(gameVersions.keySet().toDLList().get(0)));
+                // outObj.writeObject("drawing");
+                // outObj.reset();
+                // word = words[(int)(Math.random() * words.length)];
+                // outObj.writeObject("word "+word);
+                System.out.println("word "+words[0]);
+                manager.broadcastObject("word "+words[0]);
+                // manager.broadcastObject("_" + name + " is drawing");
+
+                // grid = new Square[400][400];
+                // outObj.reset();
+                // outObj.writeObject(grid);
                 while (true) {
                     Object o = inObj.readObject();
-                    if (o instanceof String) {
-                        String s = (String)o;
-                        System.out.println(s);
-                    }
-                    // Object o = inObj.readObject();
-                    /*
-                     * if (o instanceof Square[][]) {
-                     * 
-                     * grid = (Square[][])o;
-                     * manager.broadcastObject(grid);
-                     * }
-                     */
-                    // if (o instanceof String) {
-                    // String s = (String)o;
-                    // if (number == selected && s.contains(word)) {
-                    // manager.broadcastObject(s.substring(0, s.indexOf(":")) + " wins!");
-                    // clientSocket.close();
+                    // if (o instanceof Square[][]) {
 
+                    // grid = (Square[][])o;
+                    // manager.broadcastObject(grid);
                     // }
-                    // else {
-                    // manager.broadcastObject("_" + name + ": " + o);
-                    // }
-                    // }
+                    // else
+                    if (o instanceof String) {
+                        // String s = (String) o;
+                        // if (number == selected && s.contains(word)) {
+                        //     manager.broadcastObject(s.substring(0, s.indexOf(":")) + " wins!");
+                        //     clientSocket.close();
+
+                        // } else {
+                        //     manager.broadcastObject("_" + name + ": " + o);
+                        // }
+                    }
 
                     // try {
                     // } catch (Exception e) {
