@@ -10,10 +10,11 @@ public class ServerThread implements Runnable {
     private int number;
     private Manager manager;
     private ObjectOutputStream outObj;
+    private DLList<String> players = new DLList<String>();
+    private DLList<String> scores = new DLList<String>();
     private int selected;
 
     private PrintWriter out;
-    // private Square[][] grid;
     private String[] words = { "tsignr" };
 
     public ServerThread(Socket clientSocket, int number, Manager manager, int selected) {
@@ -32,46 +33,31 @@ public class ServerThread implements Runnable {
             // BufferedReader in = new BufferedReader(new
             // InputStreamReader(clientSocket.getInputStream()));
 
-            outObj.writeObject("Connection Successful!");
+            // outObj.writeObject("Connection Successful!");
 
             ObjectInputStream inObj = new ObjectInputStream(clientSocket.getInputStream());
 
             try {
                 String name = (String) inObj.readObject();
-                manager.broadcastObject("_" + name + " logged in");
-                String word = "";
-                // Sends a message
-                System.out.println("hi");
-                // word = words[(int)(Math.random() * words.length)];
+                players.add(name);
+                
+
                 outObj.reset();
-                // outObj.writeObject("drawing");
-                // outObj.reset();
-                // word = words[(int)(Math.random() * words.length)];
-                // outObj.writeObject("word "+word);
+                
                 System.out.println("word "+words[0]);
                 manager.broadcastObject("word "+words[0]);
-                // manager.broadcastObject("_" + name + " is drawing");
 
-                // grid = new Square[400][400];
-                // outObj.reset();
-                // outObj.writeObject(grid);
                 while (true) {
                     Object o = inObj.readObject();
-                    // if (o instanceof Square[][]) {
-
-                    // grid = (Square[][])o;
-                    // manager.broadcastObject(grid);
-                    // }
-                    // else
                     if (o instanceof String) {
-                        // String s = (String) o;
-                        // if (number == selected && s.contains(word)) {
-                        //     manager.broadcastObject(s.substring(0, s.indexOf(":")) + " wins!");
-                        //     clientSocket.close();
+                        String str = (String) o;
 
-                        // } else {
-                        //     manager.broadcastObject("_" + name + ": " + o);
-                        // }
+                        scores.add(str);
+                        System.out.println("scores: " + scores.toString());
+                        System.out.println("players: " + players.toString());
+                        if(scores.size() == players.size()){
+                            manager.broadcastObject(scores.toString());
+                        }
                     }
 
                     // try {
