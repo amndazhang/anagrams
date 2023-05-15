@@ -12,6 +12,8 @@ import java.net.URL;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 
+import java.util.Timer;
+
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseEvent;
@@ -44,12 +46,15 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     private DLList<String> wordBankList;
 
     private DLList<String> addedWords; // correct guesses
-    int score;
+    private int score;
+
+    private double startTime;
+    private boolean gameStarted, gameEnded;
 
     // private String chat = "";
 
     // private ArrayList<Image> images = new ArrayList<>();
-    // private JButton sendButton;
+    private JButton startButton;
     // private boolean drawing = false;
 
     // private JTextArea textArea = new JTextArea();
@@ -57,31 +62,12 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     // private PrintWriter out;
     private ObjectOutputStream outObj;
 
-    // private int count = 0;
-
-    // private Square[][] grid;
-
-    // private int size, length;
-    // private int dimension;
-    // private int gridX, gridY;
-
-    // private Color color;
-    // private Color[] colors;
-
     public ClientScreen() throws FileNotFoundException {
-        // color = Color.RED;
-        // colors = new Color[] { Color.BLACK, Color.WHITE, Color.GRAY, Color.RED,
-        // Color.ORANGE, Color.YELLOW, Color.GREEN,
-        // Color.BLUE, Color.PINK };
-        // size = 400;
-        // length = 20;
-        // dimension = size / length;
-        // grid = new Square[length][length];
-        // gridX = 50;
-        // gridY = 50;
         wordBankList = new DLList<String>();
         addedWords = new DLList<String>();
         score = 0;
+        gameStarted = false;
+        gameEnded = false;
         try {
             Scanner scan = new Scanner(new FileReader("wordbanks/tsignr.txt"));
             // reads one line at a time
@@ -98,21 +84,17 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         this.add(textInput);
         textInput.addActionListener(this);
         textInput.setText("NICKNAME");
+        
+        startButton = new JButton();
+        startButton.setBounds(20, 500, 200, 30);
+        startButton.setText("START");
+        this.add(startButton);
+        startButton.addActionListener(this);
+        startButton.setVisible(false);
 
         typedWord = "";
         availableLetters = new DLList<>();
 
-        // textArea = new JTextArea();
-        // textArea.setBounds(100, 400, 200, 200);
-        // add(textArea);
-
-        // for (int i = 0; i < grid.length; i++) {
-        // for (int j = 0; j < grid[i].length; j++) {
-        // grid[i][j] = new Square(dimension);
-        // }
-        // }
-        // addMouseListener(this);
-        // addMouseMotionListener(this);
         addKeyListener(this);
         setFocusable(true);
         setLayout(null);
@@ -128,8 +110,14 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        if (loggedIn) {
-            // background
+        if (loggedIn && !gameStarted && !gameEnded) { // start screen
+            g.setColor(new Color(166, 127, 235));
+            g.fillRect(0, 0, 600, 600);
+
+            startButton.setVisible(true);
+        } else if (loggedIn && gameStarted && !gameEnded) { // play screen
+            startButton.setVisible(false);
+
             g.setColor(new Color(166, 127, 235));
             g.fillRect(0, 0, 600, 600);
 
@@ -141,15 +129,25 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
 
             g.setColor(Color.white);
             g.fillRect(400, 50, 150, 200);
+            int wordX = 410;
+            int wordY = 60;
+            g.setColor(Color.black);
+            for (int i = 0; i < addedWords.size(); i++) {
+                g.drawString(addedWords.get(i), wordX, wordY);
+                wordY += 30;
+            }
+
+            System.out.println(System.currentTimeMillis() - startTime);
+            if (System.currentTimeMillis() - startTime >= 1000*60){
+                gameEnded = true;
+            }
+        } else if (loggedIn && gameStarted && gameEnded) { // end game
+            g.setColor(Color.white);
+            g.fillRect(0, 0, 600, 600);
+            g.setColor(Color.black);
+            g.drawString("END", 100, 100);
         }
 
-        int wordX = 410;
-        int wordY = 60;
-        g.setColor(Color.black);
-        for (int i = 0; i < addedWords.size(); i++) {
-            g.drawString(addedWords.get(i), wordX, wordY);
-            wordY += 30;
-        }
         repaint();
 
     }
@@ -230,6 +228,10 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
 
             }
             textInput.setText(null);
+        }
+        if (e.getSource() == startButton) {
+            gameStarted = true;
+            startTime = System.currentTimeMillis();
         }
         repaint();
 
@@ -331,7 +333,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
                 break;
             }
         }
-        if (correct){
+        if (correct) {
             correctSound();
         } else {
             wrongSound();
