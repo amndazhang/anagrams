@@ -38,8 +38,9 @@ public class ServerThread implements Runnable {
             ObjectInputStream inObj = new ObjectInputStream(clientSocket.getInputStream());
 
             try {
-                String name = (String) inObj.readObject();
-                players.add(name);
+                // String name = (String) inObj.readObject();
+                // players.add(name);
+                // System.out.println(name);
                 
 
                 outObj.reset();
@@ -51,19 +52,24 @@ public class ServerThread implements Runnable {
                     Object o = inObj.readObject();
                     if (o instanceof String) {
                         String str = (String) o;
+                        
+                        if(str.contains(" ")){
+                            // endgame scores
+                            scores.add(str);
+                            System.out.println("scores: " + scores.toString());
+                            System.out.println("players: " + players.toString());
+                            System.out.println(scores.size() + " " + players.size());
 
-                        scores.add(str);
-                        System.out.println("scores: " + scores.toString());
-                        System.out.println("players: " + players.toString());
-                        if(scores.size() == players.size()){
-                            manager.broadcastObject(scores.toString());
+                            // if(scores.size() == players.size()){
+                                manager.broadcastObject(scores.toString());
+                                System.out.println(scores.toString());
+                            // }
+                        } else {
+                            // names
+                            players.add(str);
+                            System.out.println(str);
                         }
                     }
-
-                    // try {
-                    // } catch (Exception e) {
-
-                    // }
                 }
             } catch (Exception err) {
                 err.printStackTrace();

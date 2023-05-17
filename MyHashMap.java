@@ -12,7 +12,7 @@ public class MyHashMap<K,V> implements Serializable{
 
     @ SuppressWarnings("unchecked")
     public V put(K key,V obj){
-        System.out.println(key.hashCode());
+        // System.out.println(key.hashCode());
         V prev = (V)hashArray[key.hashCode()];
         hashArray[key.hashCode()] = obj;
         keySet.add(key);
@@ -48,7 +48,7 @@ public class MyHashMap<K,V> implements Serializable{
         //key list to DLList
         DLList<K> printV = (DLList<K>)keySet.toDLList();
         //go through keys get the DLList of classes add toString of classes to text
-        System.out.println(printV.size());
+        // System.out.println(printV.size());
         for(int i = 0; i < printV.size(); i++){
             text += printV.get(i).toString() + "\n";
         }

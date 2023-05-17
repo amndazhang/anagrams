@@ -10,7 +10,7 @@ public class Server {
 		 int selected = 1;
 		//This loop will run and wait for one connection at a time.
 		while(true){
-			System.out.println("Waiting for a connection");
+			// System.out.println("Waiting for a connection");
 
 			//Wait for a connection.
 			Socket clientSocket = serverSocket.accept();

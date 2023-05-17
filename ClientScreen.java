@@ -47,7 +47,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
 
     private DLList<String> addedWords; // correct guesses
     private int score;
-    private String finalScores;
+    private DLList<String> finalScores;
 
     private double startTime;
     private boolean gameStarted, gameEnded;
@@ -69,7 +69,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         score = 0;
         gameStarted = false;
         gameEnded = false;
-        finalScores = "";
+        finalScores = new DLList<>();
         try {
             Scanner scan = new Scanner(new FileReader("wordbanks/tsignr.txt"));
             // reads one line at a time
@@ -133,25 +133,43 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
             g.setColor(Color.white);
             g.fillRect(400, 50, 150, 325);
             int wordX = 410;
-            int wordY = 60;
+            int wordY = 70;
             g.setColor(Color.black);
             for (int i = 0; i < addedWords.size(); i++) {
                 g.drawString(addedWords.get(i), wordX, wordY);
                 wordY += 20;
             }
 
-            if (System.currentTimeMillis() - startTime >= 1000*10){
+            if (System.currentTimeMillis() - startTime >= 1000*10){ // TIME
                 gameEnded = true;
+
+                try {
+                    outObj.reset();
+                    outObj.writeObject(name + " " + score);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
                 
             }
         } else if (loggedIn && gameStarted && gameEnded) { // end game
             g.setColor(Color.white);
             g.fillRect(0, 0, 600, 600);
             g.setColor(Color.black);
+            g.drawString("Player: " + name, 50, 50);
             g.drawString("END", 100, 100);
 
-            g.drawString(finalScores, 100, 300);
+
+            sort(finalScores);
+            for(int i = 0; i < finalScores.size(); i++){
+                String name = finalScores.get(i).split("\\s")[0];
+                int score = Integer.valueOf(finalScores.get(i).split("\\s")[1]);
+                
+                g.drawString(name + ": " + score, 100, 300+i*20);
+            
+            }
         }
+        
 
         repaint();
 
@@ -187,7 +205,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
                     if (o instanceof String) {
 
                         String s = (String) o;
-                        System.out.println("s1: " + s);
+                        // System.out.println("s1: " + s);
                         if (s.split(" ")[0].equals("word")) {
                             string = s.split(" ")[1];
 
@@ -197,19 +215,19 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
                             }
 
                         } else {
-                            System.out.println("s: " + s);
-                            finalScores = s;
+                            //.out.println("s(in else): " + s);
+                            //nt score = Integer.valueOf(s.split("\\s")[1]);
+                            // int scoe = (int)(s.split(" ")[1]);
+                            //String name = s.split("\\s")[0];
+                            //System.out.println("score + name: " + score + " " + name);
+                            finalScores.add(s);
                         }
                     }
                     if(o instanceof Integer){
                         Integer i = (Integer) o;
                         System.out.println("Other User's score: " + i);
                     }
-
-                    if (gameEnded) {
-                        outObj.reset();
-                        outObj.writeObject(name + ": " + score);
-                    }
+                    
                     repaint();
                 } catch (Exception e) {
 
@@ -389,6 +407,21 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
             clip.start();
         } catch (Exception exc) {
             exc.printStackTrace(System.out);
+        }
+    }
+
+    public void sort(DLList<String> list){
+        for (int i=0; i<list.size()-1; i++){
+            for (int j=0; j<list.size()-i-1; j++){
+                int score1 = Integer.valueOf(list.get(j).split("\\s")[1]);
+                int score2 = Integer.valueOf(list.get(j+1).split("\\s")[1]);
+
+                if (score1 < score2){
+                    String tmp = list.get(j);
+                    list.set(j, list.get(j+1));
+                    list.set(j+1, tmp);
+                }
+            }
         }
     }
 
