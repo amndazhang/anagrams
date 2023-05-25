@@ -10,11 +10,12 @@ public class ServerThread implements Runnable {
     private int number;
     private Manager manager;
     private ObjectOutputStream outObj;
+    private DLList<String> players = new DLList<String>();
+    private DLList<String> scores = new DLList<String>();
     private int selected;
 
     private PrintWriter out;
-    // private Square[][] grid;
-    private String[] words = { "tsignr" };
+    private DLList<String> words = new DLList<>();
 
     public ServerThread(Socket clientSocket, int number, Manager manager, int selected) {
         this.clientSocket = clientSocket;
@@ -22,71 +23,53 @@ public class ServerThread implements Runnable {
         this.manager = manager;
         this.selected = selected;
 
+        words.add("tsignr");
+        words.add("lteicn");
+        words.add("armsfe");
+        words.add("spneal");
+        words.add("tderah");
+        words.add("ecstok");
     }
 
     public void run() {
 
         try {
             outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-            // out = new PrintWriter(clientSocket.getOutputStream(), true);
-            // BufferedReader in = new BufferedReader(new
-            // InputStreamReader(clientSocket.getInputStream()));
-
-            outObj.writeObject("Connection Successful!");
 
             ObjectInputStream inObj = new ObjectInputStream(clientSocket.getInputStream());
 
             try {
-                String name = (String) inObj.readObject();
-                manager.broadcastObject("_" + name + " logged in");
-                String word = "";
-                // Sends a message
-                System.out.println("hi");
-                // word = words[(int)(Math.random() * words.length)];
-                outObj.reset();
-                // outObj.writeObject("drawing");
-                // outObj.reset();
-                // word = words[(int)(Math.random() * words.length)];
-                // outObj.writeObject("word "+word);
-                System.out.println("word "+words[0]);
-                manager.broadcastObject("word "+words[0]);
-                // manager.broadcastObject("_" + name + " is drawing");
 
-                // grid = new Square[400][400];
-                // outObj.reset();
-                // outObj.writeObject(grid);
+                outObj.reset();
+
+                int n = (int) (Math.random() * words.size());
+                manager.broadcastObject("word " + words.get(n));
+                words.remove(n);
+
                 while (true) {
                     Object o = inObj.readObject();
-                    // if (o instanceof Square[][]) {
-
-                    // grid = (Square[][])o;
-                    // manager.broadcastObject(grid);
-                    // }
-                    // else
                     if (o instanceof String) {
-                        // String s = (String) o;
-                        // if (number == selected && s.contains(word)) {
-                        //     manager.broadcastObject(s.substring(0, s.indexOf(":")) + " wins!");
-                        //     clientSocket.close();
+                        String str = (String) o;
 
-                        // } else {
-                        //     manager.broadcastObject("_" + name + ": " + o);
-                        // }
+                        if (str.contains(" ")) {
+                            // endgame scores
+                            scores.add(str);
+
+                            manager.broadcastObject(scores.toString());
+                        } else {
+                            // names
+                            players.add(str);
+                        }
+                    } else if (o instanceof Boolean) {
+                        // when game restart and need new word
+                        n = (int) (Math.random() * words.size());
+                        manager.broadcastObject("word " + words.get(n));
+                        words.remove(n);
                     }
-
-                    // try {
-                    // } catch (Exception e) {
-
-                    // }
                 }
             } catch (Exception err) {
                 err.printStackTrace();
             }
-            // Clears and close the output stream.
-            // out.flush();
-            // out.close();
-            // System.out.println(Thread.currentThread().getName() + ": connection
-            // closed.");
         } catch (IOException ex) {
             System.out.println("Error listening for a connection");
             System.out.println(ex.getMessage());
