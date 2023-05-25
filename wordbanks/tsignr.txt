@@ -3,7 +3,6 @@ girts
 grins
 grist
 grits
-instr
 rings
 sting
 tings
@@ -28,15 +27,10 @@ gin
 git
 ins
 int
-irs
 its
 nit
 rig
-rns
-Sig
-sgt
 sin
 sir
 sit
-sri
 tin

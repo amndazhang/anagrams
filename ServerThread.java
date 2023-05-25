@@ -15,7 +15,7 @@ public class ServerThread implements Runnable {
     private int selected;
 
     private PrintWriter out;
-    private String[] words = { "tsignr" };
+    private DLList<String> words = new DLList<>();
 
     public ServerThread(Socket clientSocket, int number, Manager manager, int selected) {
         this.clientSocket = clientSocket;
@@ -23,62 +23,53 @@ public class ServerThread implements Runnable {
         this.manager = manager;
         this.selected = selected;
 
+        words.add("tsignr");
+        words.add("lteicn");
+        words.add("armsfe");
+        words.add("spneal");
+        words.add("tderah");
+        words.add("ecstok");
     }
 
     public void run() {
 
         try {
             outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-            // out = new PrintWriter(clientSocket.getOutputStream(), true);
-            // BufferedReader in = new BufferedReader(new
-            // InputStreamReader(clientSocket.getInputStream()));
-
-            // outObj.writeObject("Connection Successful!");
 
             ObjectInputStream inObj = new ObjectInputStream(clientSocket.getInputStream());
 
             try {
-                // String name = (String) inObj.readObject();
-                // players.add(name);
-                // System.out.println(name);
-                
 
                 outObj.reset();
-                
-                System.out.println("word "+words[0]);
-                manager.broadcastObject("word "+words[0]);
+
+                int n = (int) (Math.random() * words.size());
+                manager.broadcastObject("word " + words.get(n));
+                words.remove(n);
 
                 while (true) {
                     Object o = inObj.readObject();
                     if (o instanceof String) {
                         String str = (String) o;
-                        
-                        if(str.contains(" ")){
+
+                        if (str.contains(" ")) {
                             // endgame scores
                             scores.add(str);
-                            System.out.println("scores: " + scores.toString());
-                            System.out.println("players: " + players.toString());
-                            System.out.println(scores.size() + " " + players.size());
 
-                            // if(scores.size() == players.size()){
-                                manager.broadcastObject(scores.toString());
-                                System.out.println(scores.toString());
-                            // }
+                            manager.broadcastObject(scores.toString());
                         } else {
                             // names
                             players.add(str);
-                            System.out.println(str);
                         }
+                    } else if (o instanceof Boolean) {
+                        // when game restart and need new word
+                        n = (int) (Math.random() * words.size());
+                        manager.broadcastObject("word " + words.get(n));
+                        words.remove(n);
                     }
                 }
             } catch (Exception err) {
                 err.printStackTrace();
             }
-            // Clears and close the output stream.
-            // out.flush();
-            // out.close();
-            // System.out.println(Thread.currentThread().getName() + ": connection
-            // closed.");
         } catch (IOException ex) {
             System.out.println("Error listening for a connection");
             System.out.println(ex.getMessage());
