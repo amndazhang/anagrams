@@ -147,19 +147,6 @@ public class DLList<E> implements Serializable {
 		return result;
 	}
 	
-	/*public String toString() {
-		if (size == 0)
-			return "[]";
-		String result = "[";
-		Node<E> current = head.next();
-		for (int i = 0; i < size-1; i++) {
-			result += current.get().toString() + ", ";
-			current = current.next();
-		}
-		result += current.get().toString() + "]";
-		return result;
-	}*/
-	
 	public int indexOf(E element) {
 		Node<E> current = head.next();
         for (int i = 0; i < size; i++) {

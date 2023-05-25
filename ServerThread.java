@@ -1,9 +1,5 @@
 import java.net.*;
-import java.nio.channels.SelectableChannel;
 import java.io.*;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.*;
 
 public class ServerThread implements Runnable {
     private Socket clientSocket;
