@@ -1,5 +1,9 @@
 import java.net.*;
+import java.nio.channels.SelectableChannel;
 import java.io.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.*;
 
 public class ServerThread implements Runnable {
     private Socket clientSocket;
@@ -46,12 +50,24 @@ public class ServerThread implements Runnable {
                     Object o = inObj.readObject();
                     if (o instanceof String) {
                         String str = (String) o;
-
+                        System.out.println("str: " + str);
+                        DLList<String> currnames = new DLList<String>();
                         if (str.contains(" ")) {
-                            // endgame scores
+                            // endgame scores                            
+                            for (int i=0; i<scores.size(); i++){
+                                if (scores.get(i).split(" ")[0].equals(str.split(" ")[0])){
+                                    scores.remove(i);
+                                }
+                            }
                             scores.add(str);
 
-                            manager.broadcastObject(scores.toString());
+                            // System.out.println("scores.toString(): " + scores.toString());
+                            // manager.broadcastObject(scores.toString());
+
+                            for (int i=0; i<scores.size(); i++){
+                                System.out.println("scores.get(i): " + scores.get(i));
+                                manager.broadcastObject(scores.get(i));
+                            }
                         } else {
                             // names
                             players.add(str);

@@ -32,12 +32,13 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
 
     private JTextField textInput;
     // private String chatMessage;
-    private String hostName = "10.210.124.119"; // "localhost";
+    private String hostName = "localhost";
     private String name = "";
     private boolean loggedIn = false;
 
     private String string; // 6 letters
     private String typedWord; // current typing word
+    // private String currLetterBank = "";
     private DLList<Character> availableLetters;
     private DLList<String> wordBankList;
 
@@ -48,6 +49,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     private double startTime;
     private boolean gameStarted, gameEnded, scoreViewed, gameFinalEnded;
 
+    private Color green;
 
     private JTextArea textArea = new JTextArea();
     private JScrollPane scrollPane = new JScrollPane(textArea);
@@ -131,6 +133,8 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
         typedWord = "";
         availableLetters = new DLList<>();
 
+        green = new Color(25, 110, 45);
+
         textArea.setBounds(50, 100, 200, 400);
         textArea.setEditable(false);
         textArea.setText(addedWords.toString());
@@ -173,7 +177,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-
+        
         g.setColor(purple);
         g.fillRect(0, 0, 600, 600);
 
@@ -251,7 +255,9 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
                 try {
                     outObj.reset();
                     outObj.writeObject(name + " " + totalScore);
+                    System.out.println(name + " " + totalScore);
                 } catch (IOException e) {
+                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
 
@@ -299,6 +305,7 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
             scrollPane2.setVisible(false);
 
             sort(finalScores);
+            ///System.out.println("finalScorestoStr:" + finalScores.toString());
             for (int i = 0; i < finalScores.size(); i++) {
                 String name = finalScores.get(i).split("\\s")[0];
                 int s = Integer.valueOf(finalScores.get(i).split("\\s")[1]);
@@ -316,11 +323,13 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
 
         int portNumber = 1024;
         try {
+            // ServerSocket clientServer = new ServerSocket(portNumber);
             Socket serverSocket = new Socket(hostName, portNumber);
             outObj = new ObjectOutputStream(serverSocket.getOutputStream());
 
             ObjectInputStream inObj = new ObjectInputStream(serverSocket.getInputStream());
 
+            // Receive server location
             while (true) {
                 try {
                     Object o = inObj.readObject();
@@ -360,8 +369,13 @@ public class ClientScreen extends JPanel implements ActionListener, KeyListener 
                             }
 
                         } else {
+                            // finalScores = new DLList<String>();
+                            System.out.println("s: " + s);
                             finalScores.add(s);
                         }
+                    }
+                    if (o instanceof Integer) {
+                        Integer i = (Integer) o;
                     }
 
                     repaint();
